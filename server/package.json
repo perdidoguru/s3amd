@@ -10,17 +10,15 @@
     "dev": "tsx watch src/index.ts"
   },
   "dependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "livekit-server-sdk": "^2.1.2",
-    "socket.io": "^4.7.5"
-  },
-  "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
-    "@types/node": "^20.12.7",
-    "socket.io-client": "^4.8.4",
+    "socket.io": "^4.7.5",
+    "socket.io-client": "^4.7.5",
     "tsx": "^4.7.2",
     "typescript": "^5.4.5"
   }

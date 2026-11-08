@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Cinema Social 3D Multiplayer",
   "scripts": {
-    "install:all": "npm --prefix server install && npm --prefix client install",
+    "install:all": "npm --prefix server install --include=dev && npm --prefix client install --include=dev",
     "build:client": "npm --prefix client run build",
     "build:server": "npm --prefix server run build",
     "build": "npm run install:all && npm run build:client && npm run build:server",
