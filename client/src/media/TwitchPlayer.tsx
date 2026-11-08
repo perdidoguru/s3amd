@@ -95,8 +95,8 @@ export const TwitchPlayer: React.FC<TwitchPlayerProps> = ({ mediaId, volume, pla
   }, [playing]);
 
   return (
-    <div className="screen-media-container" style={{ position: 'relative', width: '100%', height: '100%', background: '#090812' }}>
-      <div id={containerId.current} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+    <div className="screen-media-container" style={{ position: 'relative', width: '1280px', height: '720px', background: '#090812' }}>
+      <div id={containerId.current} style={{ position: 'absolute', top: 0, left: 0, width: '1280px', height: '720px' }} />
     </div>
   );
 };

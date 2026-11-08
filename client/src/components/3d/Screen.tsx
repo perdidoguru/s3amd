@@ -69,10 +69,9 @@ export const Screen: React.FC<ScreenProps> = ({
 
       {/* HTML Video Player Mounted Directly in 3D Space */}
       <Html
-        center
         transform
         position={[0, 0, 0.08]}
-        scale={htmlScale}
+        distanceFactor={4.375}
         zIndexRange={[10, 0]}
         style={{
           width: '1280px',
