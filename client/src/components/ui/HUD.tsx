@@ -178,8 +178,28 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       </div>
 
+      {/* Center Prompt (when in cinema mode) */}
+      {isTheaterMode && (
+        <div
+          style={{
+            alignSelf: 'center',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(168, 85, 247, 0.9))',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            borderRadius: '20px',
+            padding: '7px 20px',
+            color: '#fff',
+            fontSize: '13px',
+            fontWeight: 700,
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 4px 20px rgba(99, 102, 241, 0.5)',
+          }}
+        >
+          🎬 Modo Cinema Imersivo Ativo • Pressione <kbd style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', padding: '1px 6px', borderRadius: '4px' }}>F</kbd>, <kbd style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', padding: '1px 6px', borderRadius: '4px' }}>ESC</kbd> ou ande com <kbd style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', padding: '1px 6px', borderRadius: '4px' }}>WASD</kbd> para sair
+        </div>
+      )}
+
       {/* Center Prompt (when seated) */}
-      {isSeated && (
+      {isSeated && !isTheaterMode && (
         <div
           style={{
             alignSelf: 'center',
@@ -229,6 +249,8 @@ export const HUD: React.FC<HUDProps> = ({
           <span><strong style={{ color: '#fff' }}>E:</strong> Sentar</span>
           <span>•</span>
           <span><strong style={{ color: '#fff' }}>Espaço:</strong> Pular</span>
+          <span>•</span>
+          <span><strong style={{ color: '#fff' }}>F:</strong> Modo Cinema</span>
         </div>
 
         {/* Center: Main Action Buttons */}

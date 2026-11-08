@@ -2,6 +2,7 @@ import React from 'react';
 import { Html } from '@react-three/drei';
 import { MediaState } from '../../types.js';
 import { ScreenMediaView } from '../../media/ScreenMediaView.js';
+import { VideoTextureScreen } from './VideoTextureScreen.js';
 
 interface ScreenProps {
   mediaState: MediaState;
@@ -90,30 +91,46 @@ export const Screen: React.FC<ScreenProps> = ({
       </mesh>
       <pointLight position={[0, screenHeight / 2 + 0.8, 0.5]} intensity={0.8} distance={4} color="#a855f7" />
 
-      {/* HTML Video Player Mounted Directly in 3D Space */}
-      <Html
-        transform
-        position={[0, 0, 0.08]}
-        distanceFactor={4.375}
-        zIndexRange={[10, 0]}
-        style={{
-          width: '1280px',
-          height: '720px',
-          userSelect: 'none',
-          pointerEvents: 'auto',
-          borderRadius: '4px',
-          overflow: 'hidden',
-          backgroundColor: '#000',
-        }}
-      >
-        <ScreenMediaView
-          mediaState={mediaState}
+      {/* Native 3D GPU Video Texture Mode (MP4 / WebM / HLS direct streams) */}
+      {mediaState.type === 'custom' && (
+        <VideoTextureScreen
+          url={mediaState.url}
+          playing={mediaState.playing}
+          currentTime={mediaState.currentTime}
           volume={volume}
-          isHost={isHost}
+          screenWidth={screenWidth}
+          screenHeight={screenHeight}
           onPlayStateChange={onPlayStateChange}
           onTimeUpdate={onTimeUpdate}
         />
-      </Html>
+      )}
+
+      {/* Official Platform Player Mode (YouTube, Twitch, TikTok) */}
+      {mediaState.type && mediaState.type !== 'custom' && (
+        <Html
+          transform
+          position={[0, 0, 0.08]}
+          distanceFactor={4.375}
+          zIndexRange={[10, 0]}
+          style={{
+            width: '1280px',
+            height: '720px',
+            userSelect: 'none',
+            pointerEvents: 'auto',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            backgroundColor: '#000',
+          }}
+        >
+          <ScreenMediaView
+            mediaState={mediaState}
+            volume={volume}
+            isHost={isHost}
+            onPlayStateChange={onPlayStateChange}
+            onTimeUpdate={onTimeUpdate}
+          />
+        </Html>
+      )}
     </group>
   );
 };

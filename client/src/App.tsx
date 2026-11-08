@@ -44,9 +44,28 @@ export const App: React.FC = () => {
   const [isScreenModalOpen, setIsScreenModalOpen] = useState(false);
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
+  const [isCinemaMode, setIsCinemaMode] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
+
+  // Key listener for F (toggle cinema mode) and Escape (exit cinema mode)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) return;
+      if (inLobby || isScreenModalOpen || isParticipantsOpen || isAudioSettingsOpen) return;
+
+      if (e.code === 'KeyF' && !e.repeat) {
+        setIsCinemaMode((prev) => !prev);
+      }
+      if (e.code === 'Escape' && isCinemaMode) {
+        setIsCinemaMode(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [inLobby, isScreenModalOpen, isParticipantsOpen, isAudioSettingsOpen, isCinemaMode]);
 
   // Release pointer lock when opening dialogs or returning to lobby
   useEffect(() => {
@@ -387,8 +406,10 @@ export const App: React.FC = () => {
             volume={screenVolume}
             isSpeaking={voiceState.isSpeaking}
             isMuted={voiceState.isMuted}
+            isCinemaMode={isCinemaMode}
             onSit={handleSit}
             onStand={handleStand}
+            onExitCinemaMode={() => setIsCinemaMode(false)}
             onMovementUpdate={handleMovementUpdate}
             onPlayStateChange={handlePlayStateChange}
             onTimeUpdate={handleTimeUpdate}
@@ -400,10 +421,12 @@ export const App: React.FC = () => {
             myId={myId}
             voiceState={voiceState}
             socketConnected={socketConnected}
+            isTheaterMode={isCinemaMode}
             onToggleMic={handleToggleMic}
             onOpenScreenControls={() => setIsScreenModalOpen(true)}
             onOpenParticipants={() => setIsParticipantsOpen(true)}
             onOpenAudioSettings={() => setIsAudioSettingsOpen(true)}
+            onToggleTheaterMode={() => setIsCinemaMode((prev) => !prev)}
             onLeaveRoom={handleLeaveRoom}
             onCopyInvite={handleCopyInvite}
           />

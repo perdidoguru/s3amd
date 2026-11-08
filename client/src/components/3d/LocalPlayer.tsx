@@ -14,8 +14,10 @@ interface LocalPlayerProps {
   isMuted: boolean;
   seatedChairId: string | null;
   chairs: Record<string, Chair>;
+  isCinemaMode?: boolean;
   onSit: (chairId: string) => void;
   onStand: () => void;
+  onExitCinemaMode?: () => void;
   onNearChairChange: (chairId: string | null) => void;
   onMovementUpdate: (update: {
     position: [number, number, number];
@@ -32,8 +34,10 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
   isMuted,
   seatedChairId,
   chairs,
+  isCinemaMode = false,
   onSit,
   onStand,
+  onExitCinemaMode,
   onNearChairChange,
   onMovementUpdate,
 }) => {
@@ -193,6 +197,32 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       -sinPitch,
       -Math.cos(yaw) * cosPitch
     );
+
+    // Cinema Mode: Lock camera to unobstructed cinema view facing 14m screen
+    if (isCinemaMode) {
+      if (playerRef.current) {
+        playerRef.current.visible = false;
+      }
+
+      let cinemaCamTarget: THREE.Vector3;
+      if (isSeated && seatedChairId && chairs[seatedChairId]) {
+        const chair = chairs[seatedChairId];
+        cinemaCamTarget = new THREE.Vector3(chair.position[0], chair.position[1] + 1.25, chair.position[2] + 0.1);
+      } else {
+        cinemaCamTarget = new THREE.Vector3(0, 3.4, 4.0);
+      }
+
+      camera.position.lerp(cinemaCamTarget, 0.12);
+      const screenTarget = new THREE.Vector3(0, 7.6, -14.0);
+      camera.lookAt(screenTarget);
+
+      // Check if user starts moving with WASD to exit cinema mode
+      if (keys.current['KeyW'] || keys.current['KeyA'] || keys.current['KeyS'] || keys.current['KeyD']) {
+        onExitCinemaMode?.();
+      }
+
+      return;
+    }
 
     // Smooth camera distance interpolation (Roblox-style zoom)
     const isSeated = Boolean(seatedChairId && chairs[seatedChairId]);

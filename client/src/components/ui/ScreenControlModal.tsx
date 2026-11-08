@@ -26,25 +26,25 @@ interface ScreenControlModalProps {
 
 const PRESETS = [
   {
+    name: 'Big Buck Bunny (MP4 - Textura 3D Real)',
+    type: 'custom' as MediaType,
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    id: 'big-buck-bunny-mp4',
+  },
+  {
+    name: 'Tears of Steel (MP4 - Textura 3D Real)',
+    type: 'custom' as MediaType,
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    id: 'tears-of-steel-mp4',
+  },
+  {
     name: 'Lofi Girl - Relax & Study (YouTube)',
     type: 'youtube' as MediaType,
     url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
     id: 'jfKfPfyJRdk',
   },
   {
-    name: 'Big Buck Bunny 4K (Curta Aberto)',
-    type: 'youtube' as MediaType,
-    url: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
-    id: 'aqz-KE-bpKQ',
-  },
-  {
-    name: 'Tears of Steel - Sci-Fi 4K',
-    type: 'youtube' as MediaType,
-    url: 'https://www.youtube.com/watch?v=R6MlUcmOul8',
-    id: 'R6MlUcmOul8',
-  },
-  {
-    name: 'Canal Oficial Twitch Gaming',
+    name: 'Canal Oficial Twitch Gaming (Twitch)',
     type: 'twitch' as MediaType,
     url: 'https://www.twitch.tv/twitchgaming',
     id: 'channel:twitchgaming',

@@ -15,8 +15,10 @@ interface CinemaSceneProps {
   volume: number;
   isSpeaking: boolean;
   isMuted: boolean;
+  isCinemaMode?: boolean;
   onSit: (chairId: string) => void;
   onStand: () => void;
+  onExitCinemaMode?: () => void;
   onMovementUpdate: (update: {
     position: [number, number, number];
     rotationY: number;
@@ -34,8 +36,10 @@ export const CinemaScene: React.FC<CinemaSceneProps> = ({
   volume,
   isSpeaking,
   isMuted,
+  isCinemaMode = false,
   onSit,
   onStand,
+  onExitCinemaMode,
   onMovementUpdate,
   onPlayStateChange,
   onTimeUpdate,
@@ -89,8 +93,10 @@ export const CinemaScene: React.FC<CinemaSceneProps> = ({
           isMuted={isMuted}
           seatedChairId={seatedChairId}
           chairs={room.chairs}
+          isCinemaMode={isCinemaMode}
           onSit={onSit}
           onStand={onStand}
+          onExitCinemaMode={onExitCinemaMode}
           onNearChairChange={setNearChairId}
           onMovementUpdate={onMovementUpdate}
         />
