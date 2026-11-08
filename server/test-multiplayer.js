@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 
-const SERVER_URL = 'http://localhost:3001';
+const SERVER_URL = process.env.TEST_SERVER_URL || 'http://localhost:3001';
 
 async function runTests() {
   console.log('--- Starting Cinema Social 3D Multiplayer Simulation Tests ---');
