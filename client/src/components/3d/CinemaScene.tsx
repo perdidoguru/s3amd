@@ -1,0 +1,105 @@
+import React, { useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { Room, Player, AnimationState } from '../../types.js';
+import { Environment } from './Environment.js';
+import { Screen } from './Screen.js';
+import { Chairs } from './Chairs.js';
+import { LocalPlayer } from './LocalPlayer.js';
+import { RemotePlayer } from './RemotePlayer.js';
+
+interface CinemaSceneProps {
+  room: Room;
+  myId: string;
+  localPlayerName: string;
+  localPlayerColor: string;
+  volume: number;
+  isSpeaking: boolean;
+  isMuted: boolean;
+  onSit: (chairId: string) => void;
+  onStand: () => void;
+  onMovementUpdate: (update: {
+    position: [number, number, number];
+    rotationY: number;
+    animation: AnimationState;
+  }) => void;
+  onPlayStateChange?: (playing: boolean) => void;
+  onTimeUpdate?: (time: number) => void;
+}
+
+export const CinemaScene: React.FC<CinemaSceneProps> = ({
+  room,
+  myId,
+  localPlayerName,
+  localPlayerColor,
+  volume,
+  isSpeaking,
+  isMuted,
+  onSit,
+  onStand,
+  onMovementUpdate,
+  onPlayStateChange,
+  onTimeUpdate,
+}) => {
+  const [nearChairId, setNearChairId] = useState<string | null>(null);
+
+  const localPlayer = room.players[myId];
+  const isHost = localPlayer?.isHost ?? false;
+  const seatedChairId = localPlayer?.seatedChairId ?? null;
+
+  const remotePlayers = Object.values(room.players).filter((p) => p.id !== myId);
+
+  return (
+    <div style={{ width: '100vw', height: '100vh', position: 'relative', overflow: 'hidden' }}>
+      <Canvas
+        shadows
+        camera={{ position: [0, 4, 12], fov: 60 }}
+        gl={{
+          antialias: true,
+          powerPreference: 'high-performance',
+        }}
+      >
+        {/* Environment (Night sky, lawn, courtyard, string lights, perimeter) */}
+        <Environment />
+
+        {/* 3D Cinema Screen with HTML media player */}
+        <Screen
+          mediaState={room.mediaState}
+          volume={volume}
+          isHost={isHost}
+          onPlayStateChange={onPlayStateChange}
+          onTimeUpdate={onTimeUpdate}
+        />
+
+        {/* Tiered Seating & Interactive Chairs */}
+        <Chairs
+          chairs={room.chairs}
+          seatedChairId={seatedChairId}
+          nearChairId={nearChairId}
+          onSit={onSit}
+          onStand={onStand}
+        />
+
+        {/* Local Player with Physics & Third-Person Camera */}
+        <LocalPlayer
+          id={myId}
+          name={localPlayerName}
+          color={localPlayerColor}
+          isHost={isHost}
+          isSpeaking={isSpeaking}
+          isMuted={isMuted}
+          seatedChairId={seatedChairId}
+          chairs={room.chairs}
+          onSit={onSit}
+          onStand={onStand}
+          onNearChairChange={setNearChairId}
+          onMovementUpdate={onMovementUpdate}
+        />
+
+        {/* Remote Players with Real-Time Interpolation & Spatial Audio Tracking */}
+        {remotePlayers.map((player: Player) => (
+          <RemotePlayer key={player.id} player={player} />
+        ))}
+      </Canvas>
+    </div>
+  );
+};
