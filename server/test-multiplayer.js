@@ -19,9 +19,9 @@ async function runTests() {
   }
 
   // 1. Connect Client 1 (Alice)
-  const client1 = io(SERVER_URL, { transports: ['websocket'] });
+  const client1 = io(SERVER_URL, { transports: ['websocket', 'polling'] });
   // 2. Connect Client 2 (Bob)
-  const client2 = io(SERVER_URL, { transports: ['websocket'] });
+  const client2 = io(SERVER_URL, { transports: ['websocket', 'polling'] });
 
   await new Promise((resolve) => client1.on('connect', resolve));
   await new Promise((resolve) => client2.on('connect', resolve));
