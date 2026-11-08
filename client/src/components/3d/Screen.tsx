@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Html } from '@react-three/drei';
+import * as THREE from 'three';
 import { MediaState } from '../../types.js';
 import { ScreenMediaView } from '../../media/ScreenMediaView.js';
 
@@ -24,8 +25,32 @@ export const Screen: React.FC<ScreenProps> = ({
   const screenY = 5.4;
   const screenZ = -14.0;
 
-  // 1280px width * 0.0109375 = 14.0 units
-  const htmlScale = screenWidth / 1280;
+  // Shader material with NoBlending that punches an alpha=0 cutout into the WebGL canvas,
+  // allowing the HTML iframe behind it to show through while letting 3D meshes (characters, chairs)
+  // in front of the screen occlude the video naturally.
+  const occlusionMaterial = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        side: THREE.DoubleSide,
+        blending: THREE.NoBlending,
+        vertexShader: `
+          void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          void main() {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+          }
+        `,
+      }),
+    []
+  );
+
+  const occlusionGeometry = useMemo(
+    () => new THREE.PlaneGeometry(screenWidth, screenHeight),
+    [screenWidth, screenHeight]
+  );
 
   return (
     <group position={[0, screenY, screenZ]}>
@@ -41,11 +66,13 @@ export const Screen: React.FC<ScreenProps> = ({
         <meshStandardMaterial color="#18181b" roughness={0.5} metalness={0.5} />
       </mesh>
 
-      {/* Screen Backplane (Dark backdrop when no media) */}
-      <mesh position={[0, 0, 0]}>
-        <planeGeometry args={[screenWidth, screenHeight]} />
-        <meshBasicMaterial color="#020204" />
-      </mesh>
+      {/* Screen Backplane (Dark backdrop when no media is chosen) */}
+      {!mediaState.type && (
+        <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[screenWidth, screenHeight]} />
+          <meshBasicMaterial color="#020204" />
+        </mesh>
+      )}
 
       {/* Cinema Screen Backlight / Ambient Glow (soft blue/violet) */}
       <pointLight position={[0, 0, 1.5]} intensity={1.8} distance={16} color="#6366f1" />
@@ -67,12 +94,15 @@ export const Screen: React.FC<ScreenProps> = ({
       </mesh>
       <pointLight position={[0, screenHeight / 2 + 0.8, 0.5]} intensity={0.8} distance={4} color="#a855f7" />
 
-      {/* HTML Video Player Mounted Directly in 3D Space */}
+      {/* HTML Video Player with 3D Depth Occlusion Blending */}
       <Html
         transform
+        occlude="blending"
+        geometry={occlusionGeometry}
+        material={occlusionMaterial}
         position={[0, 0, 0.08]}
         distanceFactor={4.375}
-        zIndexRange={[10, 0]}
+        zIndexRange={[100, 0]}
         style={{
           width: '1280px',
           height: '720px',

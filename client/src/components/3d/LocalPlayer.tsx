@@ -95,6 +95,7 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
   // Releasing the mouse button IMMEDIATELY restores the normal mouse cursor!
   useEffect(() => {
     const canvas = gl.domElement;
+    const container = canvas.parentElement || canvas;
 
     const onMouseDown = (e: MouseEvent) => {
       // 0 = left click, 2 = right click
@@ -146,16 +147,20 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     };
 
     canvas.addEventListener('mousedown', onMouseDown);
+    container.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('contextmenu', onContextMenu);
+    container.addEventListener('contextmenu', onContextMenu);
     window.addEventListener('blur', onBlur);
 
     return () => {
       canvas.removeEventListener('mousedown', onMouseDown);
+      container.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('contextmenu', onContextMenu);
+      container.removeEventListener('contextmenu', onContextMenu);
       window.removeEventListener('blur', onBlur);
     };
   }, [gl]);
