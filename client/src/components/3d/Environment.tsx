@@ -37,8 +37,11 @@ export const Environment: React.FC = () => {
 
   return (
     <group>
-      {/* Night Sky & Stars */}
-      <color attach="background" args={['#050814']} />
+      {/* 3D Night Sky Dome with Depth Testing (enables WebGL alpha transparency for screen hole-punching) */}
+      <mesh renderOrder={10}>
+        <sphereGeometry args={[75, 32, 16]} />
+        <meshBasicMaterial color="#050814" side={THREE.BackSide} depthTest={true} depthWrite={false} />
+      </mesh>
       <fog attach="fog" args={['#050814', 25, 65]} />
       <Stars radius={80} depth={50} count={3500} factor={4} saturation={0.2} fade speed={1} />
 

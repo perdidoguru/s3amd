@@ -59,7 +59,17 @@ export const CinemaScene: React.FC<CinemaSceneProps> = ({
         camera={{ position: [0, 4, 12], fov: 60 }}
         gl={{
           antialias: true,
+          alpha: true,
           powerPreference: 'high-performance',
+        }}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 10,
+          pointerEvents: 'auto',
         }}
       >
         {/* Environment (Night sky, lawn, courtyard, string lights, perimeter) */}

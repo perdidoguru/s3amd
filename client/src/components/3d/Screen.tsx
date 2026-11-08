@@ -41,10 +41,12 @@ export const Screen: React.FC<ScreenProps> = ({
       </mesh>
 
       {/* Screen Backplane (Dark backdrop when no media is chosen) */}
-      <mesh position={[0, 0, 0]}>
-        <planeGeometry args={[screenWidth, screenHeight]} />
-        <meshBasicMaterial color="#020204" />
-      </mesh>
+      {!mediaState.type && (
+        <mesh position={[0, 0, 0]}>
+          <planeGeometry args={[screenWidth, screenHeight]} />
+          <meshBasicMaterial color="#020204" />
+        </mesh>
+      )}
 
       {/* Cinema Screen Backlight / Ambient Glow (soft blue/violet) */}
       <pointLight position={[0, 0, 1.8]} intensity={2.2} distance={20} color="#6366f1" />
@@ -105,31 +107,41 @@ export const Screen: React.FC<ScreenProps> = ({
         />
       )}
 
-      {/* Official Platform Player Mode (YouTube, Twitch, TikTok) */}
+      {/* Official Platform Player Mode (YouTube, Twitch, TikTok) with Hole-Punch Depth Occlusion */}
       {mediaState.type && mediaState.type !== 'custom' && (
-        <Html
-          transform
-          position={[0, 0, 0.08]}
-          distanceFactor={4.375}
-          zIndexRange={[10, 0]}
-          style={{
-            width: '1280px',
-            height: '720px',
-            userSelect: 'none',
-            pointerEvents: 'auto',
-            borderRadius: '4px',
-            overflow: 'hidden',
-            backgroundColor: '#000',
-          }}
-        >
-          <ScreenMediaView
-            mediaState={mediaState}
-            volume={volume}
-            isHost={isHost}
-            onPlayStateChange={onPlayStateChange}
-            onTimeUpdate={onTimeUpdate}
-          />
-        </Html>
+        <>
+          {/* Depth Mask Mesh: Punches a transparent window into WebGL canvas so the HTML behind it shows through */}
+          <mesh position={[0, 0, 0.02]} renderOrder={-1}>
+            <planeGeometry args={[screenWidth, screenHeight]} />
+            <meshBasicMaterial colorWrite={false} depthWrite={true} />
+          </mesh>
+
+          {/* HTML Video Player Mounted BEHIND the WebGL Canvas (prepend=true, zIndex 1) */}
+          <Html
+            transform
+            prepend
+            position={[0, 0, 0.0]}
+            distanceFactor={4.375}
+            zIndexRange={[1, 1]}
+            style={{
+              width: '1280px',
+              height: '720px',
+              userSelect: 'none',
+              pointerEvents: 'none',
+              borderRadius: '4px',
+              overflow: 'hidden',
+              backgroundColor: '#000',
+            }}
+          >
+            <ScreenMediaView
+              mediaState={mediaState}
+              volume={volume}
+              isHost={isHost}
+              onPlayStateChange={onPlayStateChange}
+              onTimeUpdate={onTimeUpdate}
+            />
+          </Html>
+        </>
       )}
     </group>
   );
