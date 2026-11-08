@@ -12,6 +12,8 @@ import {
   Check,
   Crown,
   Volume2,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 
 interface HUDProps {
@@ -19,12 +21,14 @@ interface HUDProps {
   myId: string;
   voiceState: VoiceState;
   socketConnected: boolean;
+  isTheaterMode?: boolean;
   onToggleMic: () => void;
   onOpenScreenControls: () => void;
   onOpenParticipants: () => void;
   onOpenAudioSettings: () => void;
   onLeaveRoom: () => void;
   onCopyInvite: () => void;
+  onToggleTheaterMode?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -32,12 +36,14 @@ export const HUD: React.FC<HUDProps> = ({
   myId,
   voiceState,
   socketConnected,
+  isTheaterMode = false,
   onToggleMic,
   onOpenScreenControls,
   onOpenParticipants,
   onOpenAudioSettings,
   onLeaveRoom,
   onCopyInvite,
+  onToggleTheaterMode,
 }) => {
   const [copied, setCopied] = useState(false);
   const localPlayer = room.players[myId];
@@ -285,6 +291,30 @@ export const HUD: React.FC<HUDProps> = ({
             <Tv size={18} />
             <span>Controles do Telão</span>
           </button>
+
+          {/* Theater Mode (Expand Video) Button */}
+          {onToggleTheaterMode && (
+            <button
+              onClick={onToggleTheaterMode}
+              title={isTheaterMode ? 'Voltar ao Cinema 3D' : 'Expandir Telão (Modo Cinema Cheio)'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: isTheaterMode ? '#2563eb' : 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                borderRadius: '12px',
+                padding: '10px 12px',
+                color: '#fff',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {isTheaterMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+              <span>{isTheaterMode ? 'Modo 3D' : 'Expandir'}</span>
+            </button>
+          )}
 
           {/* Audio Settings */}
           <button

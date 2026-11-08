@@ -138,42 +138,44 @@ export const CharacterModel: React.FC<CharacterModelProps> = ({
 
   return (
     <group ref={groupRef}>
-      {/* 3D Floating Nameplate above head */}
-      <Html
-        center
-        position={[0, 1.9, 0]}
-        distanceFactor={12}
-        style={{ pointerEvents: 'none', userSelect: 'none' }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            background: isSpeaking ? 'rgba(16, 185, 129, 0.9)' : 'rgba(15, 23, 42, 0.85)',
-            border: `1.5px solid ${isSpeaking ? '#10b981' : color}`,
-            padding: '3px 9px',
-            borderRadius: '16px',
-            color: '#fff',
-            fontSize: '11px',
-            fontWeight: 700,
-            whiteSpace: 'nowrap',
-            boxShadow: isSpeaking
-              ? '0 0 14px rgba(16, 185, 129, 0.7)'
-              : '0 2px 8px rgba(0, 0, 0, 0.4)',
-            transition: 'all 0.2s ease',
-          }}
+      {/* 3D Floating Nameplate above head (only for remote players to avoid blocking local view/UI) */}
+      {!isLocal && (
+        <Html
+          center
+          position={[0, 1.9, 0]}
+          distanceFactor={12}
+          zIndexRange={[10, 0]}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
         >
-          {isHost && <Crown size={12} color="#fbbf24" />}
-          <span>{name}</span>
-          {isLocal && <span style={{ opacity: 0.7, fontSize: '10px' }}>(Você)</span>}
-          {isMuted ? (
-            <MicOff size={11} color="#ef4444" />
-          ) : isSpeaking ? (
-            <Mic size={11} color="#10b981" />
-          ) : null}
-        </div>
-      </Html>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              background: isSpeaking ? 'rgba(16, 185, 129, 0.9)' : 'rgba(15, 23, 42, 0.85)',
+              border: `1.5px solid ${isSpeaking ? '#10b981' : color}`,
+              padding: '3px 9px',
+              borderRadius: '16px',
+              color: '#fff',
+              fontSize: '11px',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+              boxShadow: isSpeaking
+                ? '0 0 14px rgba(16, 185, 129, 0.7)'
+                : '0 2px 8px rgba(0, 0, 0, 0.4)',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {isHost && <Crown size={12} color="#fbbf24" />}
+            <span>{name}</span>
+            {isMuted ? (
+              <MicOff size={11} color="#ef4444" />
+            ) : isSpeaking ? (
+              <Mic size={11} color="#10b981" />
+            ) : null}
+          </div>
+        </Html>
+      )}
 
       {/* Speaking Halo Ring */}
       {isSpeaking && (

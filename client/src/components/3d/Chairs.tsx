@@ -98,7 +98,7 @@ export const Chairs: React.FC<ChairsProps> = ({
 
             {/* Interactive 3D Prompt: "[E] Sentar" */}
             {isNear && (
-              <Html center position={[0, 1.1, 0]} distanceFactor={10}>
+              <Html center position={[0, 1.1, 0]} distanceFactor={10} zIndexRange={[10, 0]}>
                 <button
                   onClick={() => onSit(chair.id)}
                   style={{
@@ -137,7 +137,7 @@ export const Chairs: React.FC<ChairsProps> = ({
 
             {/* Interactive 3D Prompt when player is in this seat: "[E] Levantar" */}
             {isMySeat && (
-              <Html center position={[0, 1.3, 0]} distanceFactor={10}>
+              <Html center position={[0, 1.3, 0]} distanceFactor={10} zIndexRange={[10, 0]}>
                 <button
                   onClick={onStand}
                   style={{

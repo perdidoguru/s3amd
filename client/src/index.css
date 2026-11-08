@@ -71,3 +71,30 @@ input {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* Ensure all video iframes (YouTube, Twitch, etc) stretch to fill the 16:9 cinema screen */
+iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+.screen-media-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.screen-media-container iframe,
+.screen-media-container video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
+}
+

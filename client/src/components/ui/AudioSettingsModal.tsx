@@ -27,7 +27,7 @@ export const AudioSettingsModal: React.FC<AudioSettingsModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 10000,
+        zIndex: 99999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
