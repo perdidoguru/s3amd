@@ -55,6 +55,9 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
   // yaw: 0 faces cinema screen (-Z)
   // pitch: <0 looks UP at screen/sky; >0 looks DOWN at ground
   const cameraAngles = useRef({ yaw: 0, pitch: -0.12 });
+  // Camera zoom distance (Roblox-style mouse wheel zoom)
+  const targetCamDist = useRef(3.6);
+  const currentCamDist = useRef(3.6);
   const lastSendTime = useRef(0);
   const nearChairIdRef = useRef<string | null>(null);
 
@@ -137,6 +140,15 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       e.preventDefault();
     };
 
+    const onWheel = (e: WheelEvent) => {
+      // Roblox-style camera zoom in/out with mouse wheel
+      const zoomSpeed = 0.003;
+      targetCamDist.current = Math.max(
+        0.3, // First person / close eye level
+        Math.min(6.5, targetCamDist.current + e.deltaY * zoomSpeed)
+      );
+    };
+
     const onBlur = () => {
       mouseDrag.current = false;
       if (document.pointerLockElement === canvas) {
@@ -152,6 +164,7 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     window.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('contextmenu', onContextMenu);
     container.addEventListener('contextmenu', onContextMenu);
+    window.addEventListener('wheel', onWheel, { passive: true });
     window.addEventListener('blur', onBlur);
 
     return () => {
@@ -161,6 +174,7 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       window.removeEventListener('mousemove', onMouseMove);
       canvas.removeEventListener('contextmenu', onContextMenu);
       container.removeEventListener('contextmenu', onContextMenu);
+      window.removeEventListener('wheel', onWheel);
       window.removeEventListener('blur', onBlur);
     };
   }, [gl]);
@@ -180,6 +194,17 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       -Math.cos(yaw) * cosPitch
     );
 
+    // Smooth camera distance interpolation (Roblox-style zoom)
+    const isSeated = Boolean(seatedChairId && chairs[seatedChairId]);
+    // When seated, default to eye level view (0.35m) so the screen is completely unobstructed
+    const desiredDist = isSeated ? Math.min(targetCamDist.current, 0.45) : targetCamDist.current;
+    currentCamDist.current = THREE.MathUtils.lerp(currentCamDist.current, desiredDist, 0.15);
+
+    // Hide local avatar when zoomed into first-person/eye level to prevent blocking the movie
+    if (playerRef.current) {
+      playerRef.current.visible = currentCamDist.current >= 0.75;
+    }
+
     // 1. If seated, lock to chair position and orientation
     if (seatedChairId && chairs[seatedChairId]) {
       const chair = chairs[seatedChairId];
@@ -197,16 +222,14 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
         playerRef.current.rotation.y = rotationY.current;
       }
 
-      // Camera while seated: smooth panoramic view towards cinema screen
-      const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 0.95, pos.current.z);
-      const camDist = 2.0;
-
-      const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(camDist));
+      // Camera while seated: eye level view facing cinema screen
+      const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 1.15, pos.current.z);
+      const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(currentCamDist.current));
       if (targetCamPos.y < pos.current.y + 0.3) {
         targetCamPos.y = pos.current.y + 0.3;
       }
 
-      camera.position.lerp(targetCamPos, 0.15);
+      camera.position.lerp(targetCamPos, 0.18);
       const lookTarget = camera.position.clone().add(viewDir.clone().multiplyScalar(15));
       camera.lookAt(lookTarget);
 
@@ -284,8 +307,8 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     pos.current.z = Math.max(-11.5, Math.min(12.5, pos.current.z));
 
     // Prevent walking into screen stage
-    if (pos.current.z < -11.0 && Math.abs(pos.current.x) < 8.5) {
-      pos.current.z = -11.0;
+    if (pos.current.z < -8.0 && Math.abs(pos.current.x) < 8.5) {
+      pos.current.z = -8.0;
     }
 
     // Determine current animation
@@ -306,10 +329,9 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       playerRef.current.rotation.y = rotationY.current;
     }
 
-    // Third-person camera follow
+    // Third-person camera follow with zoom
     const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 1.45, pos.current.z);
-    const camDist = 3.8;
-    const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(camDist));
+    const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(currentCamDist.current));
     if (targetCamPos.y < 0.4) {
       targetCamPos.y = 0.4;
     }
