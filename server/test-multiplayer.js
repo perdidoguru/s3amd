@@ -23,8 +23,14 @@ async function runTests() {
   // 2. Connect Client 2 (Bob)
   const client2 = io(SERVER_URL, { transports: ['websocket', 'polling'] });
 
-  await new Promise((resolve) => client1.on('connect', resolve));
-  await new Promise((resolve) => client2.on('connect', resolve));
+  await new Promise((resolve) => {
+    if (client1.connected) resolve();
+    else client1.once('connect', resolve);
+  });
+  await new Promise((resolve) => {
+    if (client2.connected) resolve();
+    else client2.once('connect', resolve);
+  });
 
   assert(client1.connected && client2.connected, 'Both clients connected successfully via WebSocket');
 
