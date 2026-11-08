@@ -14,8 +14,6 @@ import {
   Volume2,
   Maximize2,
   Minimize2,
-  MousePointer,
-  Lock,
 } from 'lucide-react';
 
 interface HUDProps {
@@ -24,7 +22,6 @@ interface HUDProps {
   voiceState: VoiceState;
   socketConnected: boolean;
   isTheaterMode?: boolean;
-  isPointerLocked?: boolean;
   onToggleMic: () => void;
   onOpenScreenControls: () => void;
   onOpenParticipants: () => void;
@@ -32,7 +29,6 @@ interface HUDProps {
   onLeaveRoom: () => void;
   onCopyInvite: () => void;
   onToggleTheaterMode?: () => void;
-  onTogglePointerLock?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -41,7 +37,6 @@ export const HUD: React.FC<HUDProps> = ({
   voiceState,
   socketConnected,
   isTheaterMode = false,
-  isPointerLocked = false,
   onToggleMic,
   onOpenScreenControls,
   onOpenParticipants,
@@ -49,7 +44,6 @@ export const HUD: React.FC<HUDProps> = ({
   onLeaveRoom,
   onCopyInvite,
   onToggleTheaterMode,
-  onTogglePointerLock,
 }) => {
   const [copied, setCopied] = useState(false);
   const localPlayer = room.players[myId];
@@ -184,31 +178,6 @@ export const HUD: React.FC<HUDProps> = ({
         </div>
       </div>
 
-      {/* Pointer Lock Status Floating Banner */}
-      {isPointerLocked && (
-        <div
-          style={{
-            alignSelf: 'center',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            background: 'rgba(6, 78, 59, 0.85)',
-            border: '1px solid #10b981',
-            borderRadius: '20px',
-            padding: '6px 18px',
-            color: '#a7f3d0',
-            fontSize: '12px',
-            fontWeight: 600,
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 4px 16px rgba(16, 185, 129, 0.25)',
-            pointerEvents: 'none',
-          }}
-        >
-          <Lock size={14} color="#34d399" />
-          <span>Câmera Livre Ativa • Mova o mouse livremente • Pressione <kbd style={{ background: '#065f46', color: '#fff', padding: '1px 6px', borderRadius: '4px', border: '1px solid #10b981' }}>ESC</kbd> para liberar o cursor</span>
-        </div>
-      )}
-
       {/* Center Prompt (when seated) */}
       {isSeated && (
         <div
@@ -255,7 +224,7 @@ export const HUD: React.FC<HUDProps> = ({
         >
           <span><strong style={{ color: '#fff' }}>WASD:</strong> Mover</span>
           <span>•</span>
-          <span><strong style={{ color: '#fff' }}>Mouse:</strong> Olhar {isPointerLocked ? '(Livre)' : '(Clique p/ Travar)'}</span>
+          <span><strong style={{ color: '#fff' }}>Segure o Mouse:</strong> Girar Câmera</span>
           <span>•</span>
           <span><strong style={{ color: '#fff' }}>E:</strong> Sentar</span>
           <span>•</span>
@@ -277,31 +246,6 @@ export const HUD: React.FC<HUDProps> = ({
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
           }}
         >
-          {/* Pointer Lock Toggle Button */}
-          {onTogglePointerLock && (
-            <button
-              onClick={onTogglePointerLock}
-              title={isPointerLocked ? 'Cursor travado para câmera livre (Pressione ESC para destravar)' : 'Travar cursor do mouse para mover a câmera livremente'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: isPointerLocked ? '#059669' : 'rgba(255, 255, 255, 0.08)',
-                border: isPointerLocked ? '1px solid #10b981' : 'none',
-                borderRadius: '12px',
-                padding: '10px 12px',
-                color: '#fff',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                boxShadow: isPointerLocked ? '0 0 12px rgba(16, 185, 129, 0.35)' : 'none',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {isPointerLocked ? <Lock size={16} color="#34d399" /> : <MousePointer size={16} />}
-              <span>{isPointerLocked ? 'Câmera Livre' : 'Travar Mouse'}</span>
-            </button>
-          )}
           {/* Mic Button */}
           <button
             onClick={onToggleMic}

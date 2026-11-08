@@ -43,7 +43,8 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
   // Position, velocity and state
   const pos = useRef(new THREE.Vector3(0, 0, 7));
   const velocity = useRef(new THREE.Vector3(0, 0, 0));
-  const rotationY = useRef(0);
+  // Character front is +Z, so rotationY = Math.PI starts facing cinema screen (-Z)
+  const rotationY = useRef(Math.PI);
   const isGrounded = useRef(true);
   const currentAnimation = useRef<AnimationState>('idle');
   const [animState, setAnimState] = useState<AnimationState>('idle');
@@ -89,30 +90,39 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     };
   }, [seatedChairId, onSit, onStand]);
 
-  // Mouse look controls (pointer lock & drag orbit)
+  // Roblox-style camera controls:
+  // Hold mouse button (left or right) to lock and rotate camera smoothly;
+  // Releasing the mouse button IMMEDIATELY restores the normal mouse cursor!
   useEffect(() => {
     const canvas = gl.domElement;
 
     const onMouseDown = (e: MouseEvent) => {
-      // Allow dragging with left or right click
+      // 0 = left click, 2 = right click
       if (e.button === 0 || e.button === 2) {
         mouseDrag.current = true;
-        // Request pointer lock when clicking on the 3D canvas
-        if (document.pointerLockElement !== canvas) {
-          canvas.requestPointerLock?.();
-        }
+        try {
+          if (document.pointerLockElement !== canvas) {
+            canvas.requestPointerLock?.();
+          }
+        } catch (err) {}
       }
     };
 
-    const onMouseUp = () => {
+    const onMouseUp = (e: MouseEvent) => {
       mouseDrag.current = false;
+      // Immediately release pointer lock so cursor is restored
+      if (document.pointerLockElement === canvas) {
+        try {
+          document.exitPointerLock?.();
+        } catch (err) {}
+      }
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      const isLocked = document.pointerLockElement === canvas;
-      if (!isLocked && !mouseDrag.current) return;
+      // Only rotate camera when mouse button is being held down (like Roblox)
+      if (!mouseDrag.current) return;
 
-      const sensitivity = 0.0028;
+      const sensitivity = 0.003;
       cameraAngles.current.yaw += e.movementX * sensitivity;
       // Allow pitching UP to -1.15 rad (~ -66 deg) and DOWN to +1.0 rad (~ +57 deg)
       cameraAngles.current.pitch = Math.max(
@@ -121,18 +131,32 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       );
     };
 
-    const onWheel = (e: WheelEvent) => {
-      // Zoom in/out slightly if needed
+    const onContextMenu = (e: MouseEvent) => {
+      // Prevent browser context menu when right-clicking to rotate camera (Roblox behavior)
+      e.preventDefault();
+    };
+
+    const onBlur = () => {
+      mouseDrag.current = false;
+      if (document.pointerLockElement === canvas) {
+        try {
+          document.exitPointerLock?.();
+        } catch (err) {}
+      }
     };
 
     canvas.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('contextmenu', onContextMenu);
+    window.addEventListener('blur', onBlur);
 
     return () => {
       canvas.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('mousemove', onMouseMove);
+      canvas.removeEventListener('contextmenu', onContextMenu);
+      window.removeEventListener('blur', onBlur);
     };
   }, [gl]);
 
@@ -155,7 +179,8 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     if (seatedChairId && chairs[seatedChairId]) {
       const chair = chairs[seatedChairId];
       pos.current.set(chair.position[0], chair.position[1], chair.position[2]);
-      rotationY.current = chair.rotationY;
+      // Character model front is +Z. Facing cinema screen (-Z) requires rotationY = Math.PI
+      rotationY.current = Math.PI;
 
       if (currentAnimation.current !== 'sitting') {
         currentAnimation.current = 'sitting';
@@ -224,8 +249,8 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       moveDir.normalize();
       pos.current.addScaledVector(moveDir, speed * dt);
 
-      // Turn character towards direction of movement
-      const targetAngle = Math.atan2(moveDir.x, -moveDir.z);
+      // Turn character towards direction of movement (Character front is +Z)
+      const targetAngle = Math.atan2(moveDir.x, moveDir.z);
       // Smooth angular interpolation
       let diff = targetAngle - rotationY.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
@@ -334,7 +359,7 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
   });
 
   return (
-    <group ref={playerRef} position={[0, 0, 7]}>
+    <group ref={playerRef} position={[0, 0, 7]} rotation={[0, Math.PI, 0]}>
       <CharacterModel
         name={name}
         color={color}

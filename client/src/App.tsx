@@ -45,29 +45,8 @@ export const App: React.FC = () => {
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [isPointerLocked, setIsPointerLocked] = useState(false);
 
   const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
-
-  // Monitor browser pointer lock state
-  useEffect(() => {
-    const handlePointerLockChange = () => {
-      setIsPointerLocked(document.pointerLockElement !== null);
-    };
-    document.addEventListener('pointerlockchange', handlePointerLockChange);
-    return () => {
-      document.removeEventListener('pointerlockchange', handlePointerLockChange);
-    };
-  }, []);
-
-  const handleTogglePointerLock = useCallback(() => {
-    if (document.pointerLockElement) {
-      document.exitPointerLock?.();
-    } else {
-      const canvas = document.querySelector('canvas');
-      canvas?.requestPointerLock?.();
-    }
-  }, []);
 
   // Release pointer lock when opening dialogs or returning to lobby
   useEffect(() => {
@@ -421,8 +400,6 @@ export const App: React.FC = () => {
             myId={myId}
             voiceState={voiceState}
             socketConnected={socketConnected}
-            isPointerLocked={isPointerLocked}
-            onTogglePointerLock={handleTogglePointerLock}
             onToggleMic={handleToggleMic}
             onOpenScreenControls={() => setIsScreenModalOpen(true)}
             onOpenParticipants={() => setIsParticipantsOpen(true)}
