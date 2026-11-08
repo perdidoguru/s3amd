@@ -1,5 +1,4 @@
 import React from 'react';
-import { Html } from '@react-three/drei';
 import { Chair } from '../../types.js';
 
 interface ChairsProps {
@@ -96,80 +95,19 @@ export const Chairs: React.FC<ChairsProps> = ({
               <meshStandardMaterial color="#1f2937" metalness={0.5} roughness={0.4} />
             </mesh>
 
-            {/* Interactive 3D Prompt: "[E] Sentar" */}
+            {/* 3D Visual Indicator when chair is interactive */}
             {isNear && (
-              <Html center position={[0, 1.1, 0]} distanceFactor={10} zIndexRange={[10, 0]}>
-                <button
-                  onClick={() => onSit(chair.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: 'rgba(15, 23, 42, 0.85)',
-                    border: '1.5px solid #ec4899',
-                    borderRadius: '20px',
-                    color: '#fff',
-                    padding: '6px 14px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 0 16px rgba(236, 72, 153, 0.5)',
-                    backdropFilter: 'blur(8px)',
-                    animation: 'bounce 1s infinite alternate',
-                  }}
-                >
-                  <kbd
-                    style={{
-                      background: '#ec4899',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      color: '#fff',
-                      fontSize: '11px',
-                    }}
-                  >
-                    E
-                  </kbd>
-                  Sentar
-                </button>
-              </Html>
+              <mesh position={[0, 0.42, 0.05]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.12, 0.22, 16]} />
+                <meshBasicMaterial color="#ec4899" side={2} />
+              </mesh>
             )}
 
-            {/* Interactive 3D Prompt when player is in this seat: "[E] Levantar" */}
             {isMySeat && (
-              <Html center position={[0, 1.3, 0]} distanceFactor={10} zIndexRange={[10, 0]}>
-                <button
-                  onClick={onStand}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: 'rgba(15, 23, 42, 0.9)',
-                    border: '1.5px solid #3b82f6',
-                    borderRadius: '20px',
-                    color: '#fff',
-                    padding: '6px 14px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 0 16px rgba(59, 130, 246, 0.5)',
-                  }}
-                >
-                  <kbd
-                    style={{
-                      background: '#3b82f6',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      color: '#fff',
-                      fontSize: '11px',
-                    }}
-                  >
-                    E
-                  </kbd>
-                  Levantar
-                </button>
-              </Html>
+              <mesh position={[0, 0.42, 0.05]} rotation={[-Math.PI / 2, 0, 0]}>
+                <ringGeometry args={[0.12, 0.22, 16]} />
+                <meshBasicMaterial color="#3b82f6" side={2} />
+              </mesh>
             )}
           </group>
         );

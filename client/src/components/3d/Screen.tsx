@@ -2,7 +2,6 @@ import React from 'react';
 import { Html } from '@react-three/drei';
 import { MediaState } from '../../types.js';
 import { ScreenMediaView } from '../../media/ScreenMediaView.js';
-import { VideoTextureScreen } from './VideoTextureScreen.js';
 
 interface ScreenProps {
   mediaState: MediaState;
@@ -22,7 +21,6 @@ export const Screen: React.FC<ScreenProps> = ({
   // Screen dimensions in 3D units (16:9 ratio)
   const screenWidth = 14;
   const screenHeight = 7.875;
-  // Elevated screen height: bottom at 3.66m (2m above standing players' heads for 100% clear sightlines)
   const screenY = 7.6;
   const screenZ = -14.0;
 
@@ -78,7 +76,6 @@ export const Screen: React.FC<ScreenProps> = ({
             <boxGeometry args={[0.55, 1.6, 0.5]} />
             <meshStandardMaterial color="#111827" roughness={0.6} metalness={0.4} />
           </mesh>
-          {/* Subwoofers below at stage level */}
           <mesh position={[0, -5.6, 0.2]} castShadow>
             <boxGeometry args={[0.9, 1.2, 0.8]} />
             <meshStandardMaterial color="#0f172a" roughness={0.7} />
@@ -93,55 +90,51 @@ export const Screen: React.FC<ScreenProps> = ({
       </mesh>
       <pointLight position={[0, screenHeight / 2 + 0.8, 0.5]} intensity={0.8} distance={4} color="#a855f7" />
 
-      {/* Native 3D GPU Video Texture Mode (MP4 / WebM / HLS direct streams) */}
-      {mediaState.type === 'custom' && (
-        <VideoTextureScreen
-          url={mediaState.url}
-          playing={mediaState.playing}
-          currentTime={mediaState.currentTime}
-          volume={volume}
-          screenWidth={screenWidth}
-          screenHeight={screenHeight}
-          onPlayStateChange={onPlayStateChange}
-          onTimeUpdate={onTimeUpdate}
-        />
-      )}
+      {/* 
+        TESTE OBRIGATÓRIO DE OCLUSÃO COM BLENDING (Drei official occlude="blending")
+        1. Cubo Vermelho NA FRENTE do telão (z = +2.0m no espaço local = z = -12.0m mundo)
+        2. Cubo Azul ATRÁS do telão (z = -2.0m no espaço local = z = -16.0m mundo)
+      */}
+      {/* 1. CUBO VERMELHO: NA FRENTE DO TELÃO */}
+      <mesh position={[-3.0, 0, 2.0]} castShadow receiveShadow>
+        <boxGeometry args={[1.8, 1.8, 1.8]} />
+        <meshStandardMaterial color="#ef4444" roughness={0.3} metalness={0.2} />
+      </mesh>
 
-      {/* Official Platform Player Mode (YouTube, Twitch, TikTok) with Hole-Punch Depth Occlusion */}
-      {mediaState.type && mediaState.type !== 'custom' && (
-        <>
-          {/* Depth Mask Mesh: Punches a transparent window into WebGL canvas so the HTML behind it shows through */}
-          <mesh position={[0, 0, 0.02]} renderOrder={-1}>
-            <planeGeometry args={[screenWidth, screenHeight]} />
-            <meshBasicMaterial colorWrite={false} depthWrite={true} />
-          </mesh>
+      {/* 2. CUBO AZUL: ATRÁS DO TELÃO */}
+      <mesh position={[3.0, 0, -2.0]} castShadow receiveShadow>
+        <boxGeometry args={[1.8, 1.8, 1.8]} />
+        <meshStandardMaterial color="#3b82f6" roughness={0.3} metalness={0.2} />
+      </mesh>
 
-          {/* HTML Video Player Mounted BEHIND the WebGL Canvas (prepend=true, zIndex 1) */}
-          <Html
-            transform
-            prepend
-            position={[0, 0, 0.0]}
-            distanceFactor={4.375}
-            zIndexRange={[1, 1]}
-            style={{
-              width: '1280px',
-              height: '720px',
-              userSelect: 'none',
-              pointerEvents: 'none',
-              borderRadius: '4px',
-              overflow: 'hidden',
-              backgroundColor: '#000',
-            }}
-          >
-            <ScreenMediaView
-              mediaState={mediaState}
-              volume={volume}
-              isHost={isHost}
-              onPlayStateChange={onPlayStateChange}
-              onTimeUpdate={onTimeUpdate}
-            />
-          </Html>
-        </>
+      {/* 
+        Drei Official Blending Occlusion:
+        <Html transform occlude="blending">
+        Integrates HTML elements (including YouTube iframe) natively into WebGL depth buffer.
+      */}
+      {mediaState.type && (
+        <Html
+          transform
+          occlude="blending"
+          position={[0, 0, 0.05]}
+          distanceFactor={4.375}
+          style={{
+            width: '1280px',
+            height: '720px',
+            userSelect: 'none',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            backgroundColor: '#000',
+          }}
+        >
+          <ScreenMediaView
+            mediaState={mediaState}
+            volume={volume}
+            isHost={isHost}
+            onPlayStateChange={onPlayStateChange}
+            onTimeUpdate={onTimeUpdate}
+          />
+        </Html>
       )}
     </group>
   );

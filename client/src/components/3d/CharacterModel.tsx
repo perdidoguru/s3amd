@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
+import { Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import { AnimationState } from '../../types.js';
 import { Mic, MicOff, Crown } from 'lucide-react';
@@ -138,43 +138,20 @@ export const CharacterModel: React.FC<CharacterModelProps> = ({
 
   return (
     <group ref={groupRef}>
-      {/* 3D Floating Nameplate above head (only for remote players to avoid blocking local view/UI) */}
+      {/* 3D Floating Nameplate in WebGL for remote players */}
       {!isLocal && (
-        <Html
-          center
-          position={[0, 1.9, 0]}
-          distanceFactor={12}
-          zIndexRange={[10, 0]}
-          style={{ pointerEvents: 'none', userSelect: 'none' }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              background: isSpeaking ? 'rgba(16, 185, 129, 0.9)' : 'rgba(15, 23, 42, 0.85)',
-              border: `1.5px solid ${isSpeaking ? '#10b981' : color}`,
-              padding: '3px 9px',
-              borderRadius: '16px',
-              color: '#fff',
-              fontSize: '11px',
-              fontWeight: 700,
-              whiteSpace: 'nowrap',
-              boxShadow: isSpeaking
-                ? '0 0 14px rgba(16, 185, 129, 0.7)'
-                : '0 2px 8px rgba(0, 0, 0, 0.4)',
-              transition: 'all 0.2s ease',
-            }}
+        <Billboard position={[0, 1.9, 0]}>
+          <Text
+            fontSize={0.16}
+            color={isSpeaking ? '#10b981' : '#ffffff'}
+            outlineWidth={0.02}
+            outlineColor="#0f172a"
+            anchorX="center"
+            anchorY="middle"
           >
-            {isHost && <Crown size={12} color="#fbbf24" />}
-            <span>{name}</span>
-            {isMuted ? (
-              <MicOff size={11} color="#ef4444" />
-            ) : isSpeaking ? (
-              <Mic size={11} color="#10b981" />
-            ) : null}
-          </div>
-        </Html>
+            {isHost ? `👑 ${name}` : name}
+          </Text>
+        </Billboard>
       )}
 
       {/* Speaking Halo Ring */}
