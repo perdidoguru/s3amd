@@ -144,7 +144,7 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       // Roblox-style camera zoom in/out with mouse wheel
       const zoomSpeed = 0.003;
       targetCamDist.current = Math.max(
-        0.3, // First person / close eye level
+        0.2, // First person / eye level view
         Math.min(6.5, targetCamDist.current + e.deltaY * zoomSpeed)
       );
     };
@@ -196,13 +196,14 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
 
     // Smooth camera distance interpolation (Roblox-style zoom)
     const isSeated = Boolean(seatedChairId && chairs[seatedChairId]);
-    // When seated, default to eye level view (0.35m) so the screen is completely unobstructed
-    const desiredDist = isSeated ? Math.min(targetCamDist.current, 0.45) : targetCamDist.current;
+    // When seated, default to eye level view (0.25m) so the screen is completely unobstructed
+    const desiredDist = isSeated ? Math.min(targetCamDist.current, 0.25) : targetCamDist.current;
     currentCamDist.current = THREE.MathUtils.lerp(currentCamDist.current, desiredDist, 0.15);
 
-    // Hide local avatar when zoomed into first-person/eye level to prevent blocking the movie
+    // Hide local avatar when seated or zoomed into first-person/eye level (< 0.85m)
+    // This ensures your own avatar NEVER blocks your view of the cinema screen
     if (playerRef.current) {
-      playerRef.current.visible = currentCamDist.current >= 0.75;
+      playerRef.current.visible = !isSeated && currentCamDist.current >= 0.85;
     }
 
     // 1. If seated, lock to chair position and orientation
@@ -222,11 +223,11 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
         playerRef.current.rotation.y = rotationY.current;
       }
 
-      // Camera while seated: eye level view facing cinema screen
-      const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 1.15, pos.current.z);
+      // Camera while seated: eye level view facing cinema screen (y=1.2m, unobstructed)
+      const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 1.2, pos.current.z);
       const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(currentCamDist.current));
-      if (targetCamPos.y < pos.current.y + 0.3) {
-        targetCamPos.y = pos.current.y + 0.3;
+      if (targetCamPos.y < pos.current.y + 0.4) {
+        targetCamPos.y = pos.current.y + 0.4;
       }
 
       camera.position.lerp(targetCamPos, 0.18);
@@ -306,9 +307,9 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     pos.current.x = Math.max(-12.5, Math.min(12.5, pos.current.x));
     pos.current.z = Math.max(-11.5, Math.min(12.5, pos.current.z));
 
-    // Prevent walking into screen stage
-    if (pos.current.z < -8.0 && Math.abs(pos.current.x) < 8.5) {
-      pos.current.z = -8.0;
+    // Prevent walking into screen stage (stage is at z <= -11.5)
+    if (pos.current.z < -9.0 && Math.abs(pos.current.x) < 9.5) {
+      pos.current.z = -9.0;
     }
 
     // Determine current animation
@@ -329,11 +330,27 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       playerRef.current.rotation.y = rotationY.current;
     }
 
-    // Third-person camera follow with zoom
-    const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 1.45, pos.current.z);
+    // Roblox-style third-person camera:
+    // When looking up towards the elevated screen (pitch < 0, viewDir.y > 0),
+    // lift the camera pivot smoothly so the player's head never obstructs the screen.
+    const pitchLift = Math.max(0, viewDir.y) * 1.1;
+    // Over-the-shoulder subtle offset when in third person to keep crosshairs clear
+    const shoulderOffset = new THREE.Vector3(
+      Math.cos(yaw) * 0.35 * Math.min(1, currentCamDist.current / 2.5),
+      0,
+      Math.sin(yaw) * 0.35 * Math.min(1, currentCamDist.current / 2.5)
+    );
+
+    const pivot = new THREE.Vector3(
+      pos.current.x + shoulderOffset.x,
+      pos.current.y + 1.55 + pitchLift,
+      pos.current.z + shoulderOffset.z
+    );
+
     const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(currentCamDist.current));
-    if (targetCamPos.y < 0.4) {
-      targetCamPos.y = 0.4;
+    // Ground clamp with safety clearance so camera never clips into lawn
+    if (targetCamPos.y < 0.55) {
+      targetCamPos.y = 0.55;
     }
 
     camera.position.lerp(targetCamPos, 0.18);

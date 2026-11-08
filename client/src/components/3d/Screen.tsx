@@ -21,7 +21,8 @@ export const Screen: React.FC<ScreenProps> = ({
   // Screen dimensions in 3D units (16:9 ratio)
   const screenWidth = 14;
   const screenHeight = 7.875;
-  const screenY = 5.4;
+  // Elevated screen height: bottom at 3.66m (2m above standing players' heads for 100% clear sightlines)
+  const screenY = 7.6;
   const screenZ = -14.0;
 
   return (
@@ -45,19 +46,44 @@ export const Screen: React.FC<ScreenProps> = ({
       </mesh>
 
       {/* Cinema Screen Backlight / Ambient Glow (soft blue/violet) */}
-      <pointLight position={[0, 0, 1.5]} intensity={1.8} distance={16} color="#6366f1" />
+      <pointLight position={[0, 0, 1.8]} intensity={2.2} distance={20} color="#6366f1" />
 
-      {/* Screen Support Trusses (Poles extending to ground) */}
-      <mesh position={[-6.8, -3.2, -0.3]} castShadow>
-        <cylinderGeometry args={[0.15, 0.2, 5.5]} />
-        <meshStandardMaterial color="#27272a" metalness={0.8} roughness={0.4} />
+      {/* Dual Heavy-Duty Steel Truss Columns (extending from ground y=0 up to screen) */}
+      <mesh position={[-6.9, -3.8, -0.2]} castShadow>
+        <cylinderGeometry args={[0.2, 0.25, 7.6, 16]} />
+        <meshStandardMaterial color="#27272a" metalness={0.85} roughness={0.35} />
       </mesh>
-      <mesh position={[6.8, -3.2, -0.3]} castShadow>
-        <cylinderGeometry args={[0.15, 0.2, 5.5]} />
-        <meshStandardMaterial color="#27272a" metalness={0.8} roughness={0.4} />
+      <mesh position={[6.9, -3.8, -0.2]} castShadow>
+        <cylinderGeometry args={[0.2, 0.25, 7.6, 16]} />
+        <meshStandardMaterial color="#27272a" metalness={0.85} roughness={0.35} />
       </mesh>
 
-      {/* Decorative Cinema Sign on top */}
+      {/* Rear Steel Truss Cross-Beams */}
+      <mesh position={[0, -2.5, -0.35]}>
+        <boxGeometry args={[14, 0.18, 0.18]} />
+        <meshStandardMaterial color="#1f2937" metalness={0.8} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, -5.2, -0.35]}>
+        <boxGeometry args={[14, 0.18, 0.18]} />
+        <meshStandardMaterial color="#1f2937" metalness={0.8} roughness={0.4} />
+      </mesh>
+
+      {/* Concert Line Array Speakers (Left & Right towers) */}
+      {[-7.35, 7.35].map((x, i) => (
+        <group key={`speakers-${i}`} position={[x, -1.2, 0.15]}>
+          <mesh castShadow>
+            <boxGeometry args={[0.55, 1.6, 0.5]} />
+            <meshStandardMaterial color="#111827" roughness={0.6} metalness={0.4} />
+          </mesh>
+          {/* Subwoofers below at stage level */}
+          <mesh position={[0, -5.6, 0.2]} castShadow>
+            <boxGeometry args={[0.9, 1.2, 0.8]} />
+            <meshStandardMaterial color="#0f172a" roughness={0.7} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Decorative Cinema Header Sign on top */}
       <mesh position={[0, screenHeight / 2 + 0.5, 0]}>
         <boxGeometry args={[5, 0.6, 0.2]} />
         <meshStandardMaterial color="#0f172a" metalness={0.5} roughness={0.2} />
