@@ -51,7 +51,9 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
   // Input states
   const keys = useRef<{ [key: string]: boolean }>({});
   const mouseDrag = useRef(false);
-  const cameraAngles = useRef({ theta: Math.PI, phi: 0.35 }); // Initial camera facing forward towards screen (-z)
+  // yaw: 0 faces cinema screen (-Z)
+  // pitch: <0 looks UP at screen/sky; >0 looks DOWN at ground
+  const cameraAngles = useRef({ yaw: 0, pitch: -0.12 });
   const lastSendTime = useRef(0);
   const nearChairIdRef = useRef<string | null>(null);
 
@@ -87,14 +89,18 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     };
   }, [seatedChairId, onSit, onStand]);
 
-  // Mouse look controls (orbit drag)
+  // Mouse look controls (pointer lock & drag orbit)
   useEffect(() => {
     const canvas = gl.domElement;
 
     const onMouseDown = (e: MouseEvent) => {
-      // Allow dragging camera with left or right click
+      // Allow dragging with left or right click
       if (e.button === 0 || e.button === 2) {
         mouseDrag.current = true;
+        // Request pointer lock when clicking on the 3D canvas
+        if (document.pointerLockElement !== canvas) {
+          canvas.requestPointerLock?.();
+        }
       }
     };
 
@@ -103,12 +109,15 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     };
 
     const onMouseMove = (e: MouseEvent) => {
-      if (!mouseDrag.current) return;
-      const sensitivity = 0.0035;
-      cameraAngles.current.theta -= e.movementX * sensitivity;
-      cameraAngles.current.phi = Math.max(
-        0.05,
-        Math.min(Math.PI / 2.3, cameraAngles.current.phi + e.movementY * sensitivity)
+      const isLocked = document.pointerLockElement === canvas;
+      if (!isLocked && !mouseDrag.current) return;
+
+      const sensitivity = 0.0028;
+      cameraAngles.current.yaw += e.movementX * sensitivity;
+      // Allow pitching UP to -1.15 rad (~ -66 deg) and DOWN to +1.0 rad (~ +57 deg)
+      cameraAngles.current.pitch = Math.max(
+        -1.15,
+        Math.min(1.0, cameraAngles.current.pitch + e.movementY * sensitivity)
       );
     };
 
@@ -130,6 +139,17 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
   // Frame loop
   useFrame((_, delta) => {
     const dt = Math.min(delta, 0.1);
+    const yaw = cameraAngles.current.yaw;
+    const pitch = cameraAngles.current.pitch;
+
+    const cosPitch = Math.cos(pitch);
+    const sinPitch = Math.sin(pitch);
+    // View direction vector (yaw = 0 -> facing -Z towards screen, pitch < 0 -> looking UP towards top of screen)
+    const viewDir = new THREE.Vector3(
+      Math.sin(yaw) * cosPitch,
+      -sinPitch,
+      -Math.cos(yaw) * cosPitch
+    );
 
     // 1. If seated, lock to chair position and orientation
     if (seatedChairId && chairs[seatedChairId]) {
@@ -148,18 +168,17 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       }
 
       // Camera while seated: smooth panoramic view towards cinema screen
-      const camDist = 3.2;
-      const theta = cameraAngles.current.theta;
-      const phi = cameraAngles.current.phi;
+      const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 0.95, pos.current.z);
+      const camDist = 2.0;
 
-      const targetCamPos = new THREE.Vector3(
-        pos.current.x + camDist * Math.sin(theta) * Math.cos(phi),
-        pos.current.y + 1.2 + camDist * Math.sin(phi),
-        pos.current.z + camDist * Math.cos(theta) * Math.cos(phi)
-      );
+      const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(camDist));
+      if (targetCamPos.y < pos.current.y + 0.3) {
+        targetCamPos.y = pos.current.y + 0.3;
+      }
 
-      camera.position.lerp(targetCamPos, 0.1);
-      camera.lookAt(pos.current.x, pos.current.y + 1.3, pos.current.z - 2.0);
+      camera.position.lerp(targetCamPos, 0.15);
+      const lookTarget = camera.position.clone().add(viewDir.clone().multiplyScalar(15));
+      camera.lookAt(lookTarget);
 
       // Update spatial audio listener
       const camDir = new THREE.Vector3();
@@ -189,11 +208,11 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
 
     // 2. Walking & Movement logic
     const moveDir = new THREE.Vector3();
-    const forward = new THREE.Vector3(Math.sin(cameraAngles.current.theta), 0, Math.cos(cameraAngles.current.theta));
-    const right = new THREE.Vector3(forward.z, 0, -forward.x);
+    const forward = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+    const right = new THREE.Vector3(Math.cos(yaw), 0, Math.sin(yaw));
 
-    if (keys.current['KeyW'] || keys.current['ArrowUp']) moveDir.sub(forward);
-    if (keys.current['KeyS'] || keys.current['ArrowDown']) moveDir.add(forward);
+    if (keys.current['KeyW'] || keys.current['ArrowUp']) moveDir.add(forward);
+    if (keys.current['KeyS'] || keys.current['ArrowDown']) moveDir.sub(forward);
     if (keys.current['KeyA'] || keys.current['ArrowLeft']) moveDir.sub(right);
     if (keys.current['KeyD'] || keys.current['ArrowRight']) moveDir.add(right);
 
@@ -206,7 +225,7 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
       pos.current.addScaledVector(moveDir, speed * dt);
 
       // Turn character towards direction of movement
-      const targetAngle = Math.atan2(moveDir.x, moveDir.z);
+      const targetAngle = Math.atan2(moveDir.x, -moveDir.z);
       // Smooth angular interpolation
       let diff = targetAngle - rotationY.current;
       while (diff < -Math.PI) diff += Math.PI * 2;
@@ -258,18 +277,16 @@ export const LocalPlayer: React.FC<LocalPlayerProps> = ({
     }
 
     // Third-person camera follow
-    const camDist = 4.2;
-    const theta = cameraAngles.current.theta;
-    const phi = cameraAngles.current.phi;
+    const pivot = new THREE.Vector3(pos.current.x, pos.current.y + 1.45, pos.current.z);
+    const camDist = 3.8;
+    const targetCamPos = pivot.clone().sub(viewDir.clone().multiplyScalar(camDist));
+    if (targetCamPos.y < 0.4) {
+      targetCamPos.y = 0.4;
+    }
 
-    const targetCamPos = new THREE.Vector3(
-      pos.current.x + camDist * Math.sin(theta) * Math.cos(phi),
-      pos.current.y + 1.6 + camDist * Math.sin(phi),
-      pos.current.z + camDist * Math.cos(theta) * Math.cos(phi)
-    );
-
-    camera.position.lerp(targetCamPos, 0.15);
-    camera.lookAt(pos.current.x, pos.current.y + 1.2, pos.current.z);
+    camera.position.lerp(targetCamPos, 0.18);
+    const lookTarget = camera.position.clone().add(viewDir.clone().multiplyScalar(15));
+    camera.lookAt(lookTarget);
 
     // Update Web Audio API listener position & direction
     const camDir = new THREE.Vector3();
